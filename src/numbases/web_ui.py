@@ -49,10 +49,45 @@ def render() -> None:
             border: 1px solid #cbd5e1;
             border-radius: 10px;
         }
+        header[data-testid="stHeader"] {
+            background: rgba(248, 250, 252, 0.9) !important;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        header[data-testid="stHeader"] * {
+            color: #0f172a !important;
+        }
+        div[data-testid="stSidebarNav"] {
+            background: rgba(255, 255, 255, 0.88);
+            border-right: 1px solid #cbd5e1;
+        }
+        div[data-testid="stSidebarNav"] a,
+        div[data-testid="stSidebarNav"] span {
+            color: #0f172a !important;
+        }
+        div[data-testid="stSidebarNav"] a:hover {
+            background: #e2e8f0;
+        }
+        .top-nav {
+            display: flex;
+            gap: .6rem;
+            align-items: center;
+            margin: .2rem 0 1rem 0;
+            padding: .4rem .5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: rgba(255,255,255,.82);
+        }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
+    st.markdown('<div class="top-nav"></div>', unsafe_allow_html=True)
+    n1, n2, _ = st.columns([1, 1, 6])
+    with n1:
+        st.page_link("web_ui.py", label="Base Explorer", icon="🔢")
+    with n2:
+        st.page_link("pages/2_Non_Integer_Bases.py", label="Base φ", icon="🧮")
 
     st.markdown(
         """

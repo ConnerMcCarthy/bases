@@ -2,10 +2,15 @@ import pytest
 
 from numbases.bases import (
     PHI,
+    canonicalize_phi_digits,
     factors,
     from_base,
+    from_base_phi_exact,
     from_non_integer_base,
+    is_canonical_phi_digits,
+    phi_digits_to_expression,
     to_base,
+    to_base_phi_exact,
     to_base_parenthesized,
     to_base_phi,
     to_non_integer_base,
@@ -100,3 +105,37 @@ def test_to_base_phi_basic():
     out = to_base_phi(10)
     assert isinstance(out, str)
     assert out
+
+
+def test_phi_digits_to_expression():
+    assert phi_digits_to_expression("101") == "phi^2+1"
+    assert phi_digits_to_expression("1000.01") == "phi^3+phi^-2"
+    assert phi_digits_to_expression("0") == "0"
+    assert phi_digits_to_expression("-10.1") == "-(phi+phi^-1)"
+
+
+def test_phi_digits_to_expression_validation():
+    with pytest.raises(ValueError):
+        phi_digits_to_expression("")
+    with pytest.raises(ValueError):
+        phi_digits_to_expression("102")
+    with pytest.raises(ValueError):
+        phi_digits_to_expression("10.1.0")
+
+
+def test_phi_canonicalization_rule():
+    assert is_canonical_phi_digits("101001")
+    assert not is_canonical_phi_digits("110")
+    assert canonicalize_phi_digits("11") == "100"
+
+
+def test_base_phi_exact_integer_round_trip():
+    for n in [0, 1, 2, 3, 4, 5, 9, 12, 31, 57]:
+        encoded = to_base_phi_exact(n)
+        assert is_canonical_phi_digits(encoded)
+        assert from_base_phi_exact(encoded) == n
+
+
+def test_base_phi_exact_non_integer_rejected():
+    with pytest.raises(ValueError):
+        from_base_phi_exact("10.1")
