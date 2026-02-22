@@ -12,6 +12,7 @@ for future non-integer base work (like base-phi).
 - Parse base-`N` strings back to Python `int` values with `from_base`
 - Supports negative values
 - Uses digits `0-9` and uppercase letters `A-Z` (case-insensitive on parse)
+- Includes a visual desktop UI for exploring base conversions
 - Validated by unit tests with `pytest`
 
 ## Install
@@ -41,6 +42,33 @@ from_base("1f", 16)  # 31
 from_base("-10", 10) # -10
 from_base("101", 2)  # 5
 ```
+
+## Visual Explorer UI
+
+Launch the desktop app:
+
+```bash
+numbases-ui
+```
+
+Or without installing scripts:
+
+```bash
+python -m numbases.ui
+```
+
+If Tkinter is missing on Linux, install it first:
+
+```bash
+sudo apt-get install python3-tk
+```
+
+The UI lets you:
+
+- Enter a number and its input base
+- Convert to decimal and common bases (`2`, `8`, `10`, `16`, `36`)
+- Pick any custom output base from `2..36`
+- Quickly test negative values and invalid input handling
 
 ## API
 
