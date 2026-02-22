@@ -239,7 +239,9 @@ def _phi_power_pair(exp: int) -> tuple[int, int]:
             a, b = b, a + b
     elif exp < 0:
         for _ in range(-exp):
-            a, b = -a, a + b
+            # Invert the forward recurrence: (a, b) -> (b, a + b).
+            # Solve a_prev, b_prev from a = b_prev and b = a_prev + b_prev.
+            a, b = b - a, a
     return a, b
 
 
@@ -363,7 +365,12 @@ def _pair_to_float(a: int, b: int) -> float:
 
 
 def _phi_pair_to_digits_unsigned(
-    a_target: int, b_target: int, min_exp: int = -24, max_exp: int = 24, no_adjacent: bool = True
+    a_target: int,
+    b_target: int,
+    min_exp: int = -24,
+    max_exp: int = 24,
+    no_adjacent: bool = True,
+    max_nodes: int | None = None,
 ) -> str:
     if a_target == 0 and b_target == 0:
         return "0"
@@ -372,24 +379,39 @@ def _phi_pair_to_digits_unsigned(
     pairs = [_phi_power_pair(e) for e in exps]
     n = len(exps)
 
-    # Coarse pruning bounds on remaining |a| and |b| reachable with digits 0/1.
-    suffix_a = [0] * (n + 1)
-    suffix_b = [0] * (n + 1)
+    # Pruning bounds on remaining reachable ranges with digits 0/1.
+    suffix_min_a = [0] * (n + 1)
+    suffix_max_a = [0] * (n + 1)
+    suffix_min_b = [0] * (n + 1)
+    suffix_max_b = [0] * (n + 1)
     for i in range(n - 1, -1, -1):
         pa, pb = pairs[i]
-        suffix_a[i] = suffix_a[i + 1] + abs(pa)
-        suffix_b[i] = suffix_b[i + 1] + abs(pb)
+        suffix_min_a[i] = suffix_min_a[i + 1] + (pa if pa < 0 else 0)
+        suffix_max_a[i] = suffix_max_a[i + 1] + (pa if pa > 0 else 0)
+        suffix_min_b[i] = suffix_min_b[i + 1] + (pb if pb < 0 else 0)
+        suffix_max_b[i] = suffix_max_b[i + 1] + (pb if pb > 0 else 0)
+
+    nodes = 0
 
     @lru_cache(maxsize=None)
     def dfs(i: int, prev_one: int, a_rem: int, b_rem: int) -> tuple[int, ...] | None:
+        nonlocal nodes
+        nodes += 1
+        if max_nodes is not None and nodes > max_nodes:
+            raise ValueError("search limit exceeded")
         if i == n:
             return () if a_rem == 0 and b_rem == 0 else None
-        if abs(a_rem) > suffix_a[i] or abs(b_rem) > suffix_b[i]:
+        if (
+            a_rem < suffix_min_a[i]
+            or a_rem > suffix_max_a[i]
+            or b_rem < suffix_min_b[i]
+            or b_rem > suffix_max_b[i]
+        ):
             return None
 
+        pa, pb = pairs[i]
         # Prefer placing a 1 earlier for a canonical "left-greedy" form.
         if (no_adjacent and prev_one == 0) or (not no_adjacent):
-            pa, pb = pairs[i]
             with_one = dfs(i + 1, 1, a_rem - pa, b_rem - pb)
             if with_one is not None:
                 return (1,) + with_one
@@ -432,13 +454,19 @@ def to_base_phi_exact(n: int) -> str:
         return "0"
     negative = n < 0
     target = abs(n)
+
+    # Bounded search with pruning. Grow fractional depth gradually to avoid hangs.
+    max_exp = max(2, int(math.ceil(math.log(target + 1, PHI))) + 2)
     rendered: str | None = None
-    # Increase search window; some integers require long fractional tails.
-    base_width = max(24, 2 * target + 8)
-    for width in (base_width, base_width + 24, base_width + 48):
+    for extra_neg in (2, 4, 6, 8, 10, 12, 14, 16):
         try:
             rendered = _phi_pair_to_digits_unsigned(
-                target, 0, min_exp=-width, max_exp=width, no_adjacent=False
+                target,
+                0,
+                min_exp=-extra_neg,
+                max_exp=max_exp,
+                no_adjacent=True,
+                max_nodes=200_000,
             )
             break
         except ValueError:
