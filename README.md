@@ -13,6 +13,8 @@ for future non-integer base work (like base-phi).
 - Supports negative values
 - Uses digits `0-9` and uppercase letters `A-Z` (case-insensitive on parse)
 - Includes a visual desktop UI for exploring base conversions
+- Includes a browser-based web UI for EC2 and remote usage
+- Includes a second web page for experimental non-integer bases (starting with base-phi)
 - Validated by unit tests with `pytest`
 
 ## Install
@@ -63,12 +65,50 @@ If Tkinter is missing on Linux, install it first:
 sudo apt-get install python3-tk
 ```
 
+The UI requires a desktop session (an active display server).
+
 The UI lets you:
 
 - Enter a number and its input base
 - Convert to decimal and common bases (`2`, `8`, `10`, `16`, `36`)
 - Pick any custom output base from `2..36`
 - Quickly test negative values and invalid input handling
+
+## Web UI (Recommended for EC2)
+
+Install web dependencies:
+
+```bash
+pip install -e ".[web]"
+```
+
+Run Streamlit bound to all interfaces:
+
+```bash
+numbases-web
+```
+
+Open port `8501` in your EC2 Security Group:
+
+- Inbound rule: `Custom TCP`, port `8501`
+- Source: your IP (recommended) or `0.0.0.0/0` (public)
+
+Then open:
+
+```text
+http://<EC2_PUBLIC_IP>:8501
+```
+
+Example:
+
+```text
+http://54.123.45.67:8501
+```
+
+The web app now has multiple pages:
+
+- `Base Explorer` (integer bases)
+- `Non-Integer Bases` (experimental; starts with base-phi)
 
 ## API
 
@@ -92,7 +132,8 @@ Parses string `s` in `base` into an integer.
 
 ### `to_base_phi(n: int) -> str`
 
-Currently a stub that raises `NotImplementedError`.
+Converts an integer to an approximate base-phi representation
+using finite-precision greedy expansion.
 
 ## Run Tests
 
